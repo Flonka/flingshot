@@ -43,7 +43,11 @@ define([
 
 		var p2System = new P2System();
 		world.setSystem(p2System);
+
+		// Set some default settings in the physics world
 		p2System.world.gravity[1] = -10;
+		p2System.world.defaultContactMaterial.restitution = 0.2;
+		p2System.world.defaultContactMaterial.friction = 0.95;
 
 		var sun = world.createEntity(new DirectionalLight(new Vector3(1, 1, 1)), [0, 100, 0]);
 		sun.setRotation([-45, 45, 0]);
@@ -51,12 +55,11 @@ define([
 
 		var camera = new Camera(45, 1, 0.1, 1000);
 		camera.lookAt(Vector3.ZERO, Vector3.UNIT_Y);
-		var camEntity = world.createEntity(camera, [0, 3, 10]);
+		var camEntity = world.createEntity(camera, [0, 3, 40]);
 		camEntity.addToWorld();
 
 		var scriptComponent = new ScriptComponent();
 		scriptComponent.scripts.push(Scripts.create('MouseLookScript'));
-		scriptComponent.scripts.push(Scripts.create('WASD', {'walkSpeed': 50}));
 		camEntity.setComponent(scriptComponent);
 
 		document.body.appendChild(goo.renderer.domElement);
