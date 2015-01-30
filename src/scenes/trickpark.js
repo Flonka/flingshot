@@ -41,29 +41,36 @@ require([
 		}]
 	}));
 
-	var blockMaterial = new Material(ShaderLib.simpleColored);
-	blockMaterial.uniforms.color = [0.1, 0.05, 0.3];
+	addBlock(10, 5, [-10, 2.5, 0], gooRunner.world);
 
-	var leftBlock = gooRunner.world.createEntity(
-		new Box(10, 10, 10),
-		blockMaterial,
-		[-10, 0, 0]
-	);
-
-	leftBlock.set(new P2Component({
-		mass: 0,
-
-		shapes: [{
-			type: 'box',
-			width: 10,
-			height: 10
-		}]
-	}))
-
-	leftBlock.addToWorld();
+	addBlock(19, 4, [5, 15, 0], gooRunner.world);
 
 	ground.addToWorld();
 
 	gooRunner.startGameLoop();
+
+	function addBlock(width, height, pos, world) {
+
+		var blockMaterial = new Material(ShaderLib.simpleColored);
+		blockMaterial.uniforms.color = [0.1, 0.05, 0.3];
+
+		var leftBlock = gooRunner.world.createEntity(
+			new Box(width, height, width),
+			blockMaterial,
+			pos
+		);
+
+		leftBlock.set(new P2Component({
+			mass: 0,
+
+			shapes: [{
+				type: 'box',
+				width: width,
+				height: height
+			}]
+		}));
+
+		leftBlock.addToWorld();
+	};
 
 });

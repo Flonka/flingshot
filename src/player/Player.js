@@ -3,13 +3,17 @@ define([
 	'goo/renderer/Material',
 	'goo/renderer/shaders/ShaderLib',
 	'goo/addons/p2pack/P2Component',
-	'goo/entities/components/ScriptComponent'
+	'goo/entities/components/ScriptComponent',
+
+	'weapons/GrappleHook'
 ], function (
 	Cylinder,
 	Material,
 	ShaderLib,
 	P2Component,
-	ScriptComponent
+	ScriptComponent,
+
+	GrappleHook
 	) {
 
 	'use strict';
@@ -20,11 +24,11 @@ define([
 
 		this.material.uniforms.color = [1.0, 0, 0.5];
 
-		var width = 1.0;
-		var height = 1.8;
+		this.width = 1.0;
+		this.height = 1.8;
 
 		this.entity = world.createEntity(
-			new Cylinder(8, width, width, height),
+			new Cylinder(8, this.width, this.width, this.height),
 			this.material,
 			[0, 5, 0]
 		);
@@ -33,8 +37,8 @@ define([
 			mass: 66.6,
 			shapes: [{
 				type: 'box',
-				width: width*1.8,
-				height: height
+				width: this.width * 1.8,
+				height: this.height
 			}],
 			offsetAngleX: Math.PI/2.0
 		}));
@@ -44,6 +48,8 @@ define([
 		// Process to make p2system initialize the p2component.
 		world.process();
 		this.entity.p2Component.body.allowSleep = false;
+
+		this.hook = new GrappleHook(world, this);
 
 		// Convenience
 		this.rigidBody = this.entity.p2Component.body;
@@ -58,6 +64,7 @@ define([
 		};
 
 		this.addKeyBoardListeners();
+
 	};
 
 	Player.prototype.addKeyBoardListeners = function() {
@@ -81,7 +88,7 @@ define([
 				case 87:
 				case 38:
 					this.controls.jump = true;
-					this.rigidBody.velocity[1] = 10;
+					this.hook.fire();
 					break;
 				default:
 					console.log('unbound : ', event.keyCode);
@@ -112,7 +119,6 @@ define([
 		}.bind(this);
 
 	};
-
 
 	return Player;
 });
