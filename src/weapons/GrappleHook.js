@@ -32,8 +32,7 @@ define([
 		material.uniforms.color = [0.89, 0, 0];
 		this.hook = world.createEntity(
 			new Sphere(8, 8, this.hookRadius),
-			material,
-			[-10, 10, 0]
+			material
 		);
 		this.hook.set(new P2Component({
 			mass: this.mass,
@@ -43,18 +42,46 @@ define([
 			}]
 		}));
 		this.hook.addToWorld();
+		world.process();
+		var hookBody = this.hook.p2Component.body;
+		var hookShape = hookBody.shapes[0];
+		hookShape.sensor = true;
+		hookBody.world.on('beginContact', function (event) {
+			var hookBody = this.hook.p2Component.body;
+			if (event.bodyA == hookBody) {
+				this.createRope(event, true);
+			} else if (event.bodyB == hookBody) {
+				this.createRope(event, false);
+			}
+		}.bind(this));
+		this.hook.removeFromWorld();
+	};
+
+	GrappleHook.prototype.createRope = function(contactEvent, hookIsBodyA) {
+
+		// TODO: Create Rope-like structure, now testing with a spring.
+
+		console.log('Hook hit: ', contactEvent);
+
+		this.hook
+
 	};
 
 	GrappleHook.prototype.fire = function() {
+
+		// TODO : Still some buggy  stuff with initialization.
+		// the body is initialized to the entity transform
 		var hookBody = this.hook.p2Component.body;
+		hookBody.shapes[0].sensor = true;
 		var playerT = this.player.entity.transformComponent.worldTransform.translation;
 		hookBody.position[0] = playerT[0];
-		hookBody.position[1] = playerT[1] + this.player.height * 0.5 + this.hookRadius;
+		hookBody.position[1] = playerT[1] + this.player.height * 0.52 + this.hookRadius;
 		hookBody.velocity[0] = 0;
 		hookBody.velocity[1] = 0;
 		hookBody.force[0] = 0;
 		hookBody.force[1] = this.hookFireForce;
 		hookBody.wakeUp();
+		this.hook.addToWorld();
 	};
 
 	return GrappleHook;
