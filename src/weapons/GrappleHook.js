@@ -55,6 +55,8 @@ define([
 			}
 		}.bind(this));
 		this.hook.removeFromWorld();
+
+		this.activeSpring = null;	
 	};
 
 	GrappleHook.prototype.createRope = function(contactEvent, hookIsBodyA) {
@@ -62,25 +64,57 @@ define([
 		// TODO: Create Rope-like structure, now testing with a spring.
 
 		console.log('Hook hit: ', contactEvent);
+		this.hook.removeFromWorld();
 
-		this.hook
+		if (hookIsBodyA) {
+			var spring = new p2.LinearSpring(
+				this.player.rigidBody, 
+				contactEvent.bodyB, {
+					restLength: 1,
+					stiffness: 100,
+					localAnchorA: [0, this.player.height * 0.5],
+					worldAnchorB: this.hook.p2Component.body.position
+				});
+		} else {
+			var spring = new p2.LinearSpring(
+				this.player.rigidBody, 
+				contactEvent.bodyA, {
+					restLength: 1,
+					stiffness: 100,
+					localAnchorA: [0, this.player.height * 0.5],
+					worldAnchorB: this.hook.p2Component.body.position
+				});
+		}
 
+		this.player.rigidBody.world.addSpring(spring);
+		this.activeSpring = spring;
 	};
 
 	GrappleHook.prototype.fire = function() {
 
 		// TODO : Still some buggy  stuff with initialization.
 		// the body is initialized to the entity transform
+
+		if (this.activeSpring) {
+			var world = this.player.rigidBody.world;
+			for (var i = 0; i < world.springs.length; i++) {
+				if (this.activeSpring == world.springs[i]) {
+					world.springs.splice(i, 1);
+				}
+			}
+		}
+		
 		var hookBody = this.hook.p2Component.body;
 		hookBody.shapes[0].sensor = true;
 		var playerT = this.player.entity.transformComponent.worldTransform.translation;
+		hookBody.wakeUp();
 		hookBody.position[0] = playerT[0];
-		hookBody.position[1] = playerT[1] + this.player.height * 0.52 + this.hookRadius;
+		hookBody.position[1] = playerT[1] + this.player.height * 0.52 + this.hookRadius + 1;
 		hookBody.velocity[0] = 0;
 		hookBody.velocity[1] = 0;
 		hookBody.force[0] = 0;
 		hookBody.force[1] = this.hookFireForce;
-		hookBody.wakeUp();
+		this.hook.setTranslation([hookBody.position[0], hookBody.position[1], 0]);
 		this.hook.addToWorld();
 	};
 
