@@ -53,6 +53,7 @@ require([
 
 		var blockMaterial = new Material(ShaderLib.simpleColored);
 		blockMaterial.uniforms.color = [0.1, 0.05, 0.3];
+		blockMaterial.wireframe = true;
 
 		var leftBlock = gooRunner.world.createEntity(
 			new Box(width, height, width),

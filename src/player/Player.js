@@ -89,6 +89,11 @@ define([
 					this.controls.jump = true;
 					this.hook.fire();
 					break;
+				// Down
+				case 83:
+				case 40:
+					this.hook.releaseRope();
+					break;
 				default:
 					console.log('unbound : ', event.keyCode);
 			};
@@ -111,6 +116,10 @@ define([
 				case 87:
 				case 38:
 					this.controls.jump = false;
+					break;
+					// Down
+				case 83:
+				case 40:
 					break;
 				default:
 					console.log('unbound : ', event.keyCode);

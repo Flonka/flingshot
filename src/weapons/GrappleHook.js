@@ -60,7 +60,7 @@ define([
 
 		this.disableHook();		
 
-		this.activeSpring = null;	
+		this.activeSpring = null;
 	};
 
 	GrappleHook.prototype.disableHook = function() {
@@ -73,6 +73,19 @@ define([
 		var hookBody = this.hook.p2Component.body;
 		this.player.rigidBody.world.addBody(hookBody);
 		this.material.uniforms.color = [0.89, 0, 0];
+	};
+
+	GrappleHook.prototype.releaseRope = function() {
+		var world = this.player.rigidBody.world;
+		if (this.activeSpring) {
+			for (var i = 0; i < world.springs.length; i++) {
+				if (this.activeSpring == world.springs[i]) {
+					world.springs.splice(i, 1);
+					break;
+				}
+			}
+			this.material.uniforms.color = [0, 0.6, 0.2];
+		}
 	};
 
 	GrappleHook.prototype.createRope = function(contactEvent, hookIsBodyA) {
@@ -108,18 +121,8 @@ define([
 	};
 
 	GrappleHook.prototype.fire = function() {
-
-		// TODO : Still some buggy  stuff with initialization.
-		// the body is initialized to the entity transform
-		var world = this.player.rigidBody.world;
-
-		if (this.activeSpring) {
-			for (var i = 0; i < world.springs.length; i++) {
-				if (this.activeSpring == world.springs[i]) {
-					world.springs.splice(i, 1);
-				}
-			}
-		}
+		
+		this.releaseRope();
 		
 		var hookBody = this.hook.p2Component.body;
 		this.enableHook();
