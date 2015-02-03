@@ -48,11 +48,10 @@ define([
 		// Process to make p2system initialize the p2component.
 		world.process();
 		this.entity.p2Component.body.allowSleep = false;
-
-		this.hook = new GrappleHook(world, this);
-
 		// Convenience
 		this.rigidBody = this.entity.p2Component.body;
+
+		this.hook = new GrappleHook(world, this);
 
 		console.log(this.rigidBody.material);
 

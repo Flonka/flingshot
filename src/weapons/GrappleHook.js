@@ -42,6 +42,9 @@ define([
 			}]
 		}));
 		this.hook.addToWorld();
+
+		this.material = material;
+
 		world.process();
 		var hookBody = this.hook.p2Component.body;
 		var hookShape = hookBody.shapes[0];
@@ -54,9 +57,22 @@ define([
 				this.createRope(event, false);
 			}
 		}.bind(this));
-		this.hook.removeFromWorld();
+
+		this.disableHook();		
 
 		this.activeSpring = null;	
+	};
+
+	GrappleHook.prototype.disableHook = function() {
+		var hookBody = this.hook.p2Component.body;
+		this.player.rigidBody.world.removeBody(hookBody);
+		this.material.uniforms.color = [0, 1, 0.2];
+	};
+
+	GrappleHook.prototype.enableHook = function() {
+		var hookBody = this.hook.p2Component.body;
+		this.player.rigidBody.world.addBody(hookBody);
+		this.material.uniforms.color = [0.89, 0, 0];
 	};
 
 	GrappleHook.prototype.createRope = function(contactEvent, hookIsBodyA) {
@@ -64,7 +80,6 @@ define([
 		// TODO: Create Rope-like structure, now testing with a spring.
 
 		console.log('Hook hit: ', contactEvent);
-		this.hook.removeFromWorld();
 
 		if (hookIsBodyA) {
 			var spring = new p2.LinearSpring(
@@ -86,6 +101,8 @@ define([
 				});
 		}
 
+		this.disableHook();
+
 		this.player.rigidBody.world.addSpring(spring);
 		this.activeSpring = spring;
 	};
@@ -94,9 +111,9 @@ define([
 
 		// TODO : Still some buggy  stuff with initialization.
 		// the body is initialized to the entity transform
+		var world = this.player.rigidBody.world;
 
 		if (this.activeSpring) {
-			var world = this.player.rigidBody.world;
 			for (var i = 0; i < world.springs.length; i++) {
 				if (this.activeSpring == world.springs[i]) {
 					world.springs.splice(i, 1);
@@ -105,6 +122,8 @@ define([
 		}
 		
 		var hookBody = this.hook.p2Component.body;
+		this.enableHook();
+
 		hookBody.shapes[0].sensor = true;
 		var playerT = this.player.entity.transformComponent.worldTransform.translation;
 		hookBody.wakeUp();
@@ -114,8 +133,7 @@ define([
 		hookBody.velocity[1] = 0;
 		hookBody.force[0] = 0;
 		hookBody.force[1] = this.hookFireForce;
-		this.hook.setTranslation([hookBody.position[0], hookBody.position[1], 0]);
-		this.hook.addToWorld();
+		this.hook.transformComponent.transform.translation.setDirect([hookBody.position[0], hookBody.position[1], 0]);
 	};
 
 	return GrappleHook;
