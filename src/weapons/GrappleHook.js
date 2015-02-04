@@ -99,7 +99,7 @@ define([
 				this.player.rigidBody, 
 				contactEvent.bodyB, {
 					restLength: 1,
-					stiffness: 100,
+					stiffness: 300,
 					localAnchorA: [0, this.player.height * 0.5],
 					worldAnchorB: this.hook.p2Component.body.position
 				});
@@ -108,7 +108,7 @@ define([
 				this.player.rigidBody, 
 				contactEvent.bodyA, {
 					restLength: 1,
-					stiffness: 100,
+					stiffness: 300,
 					localAnchorA: [0, this.player.height * 0.5],
 					worldAnchorB: this.hook.p2Component.body.position
 				});
