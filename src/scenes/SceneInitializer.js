@@ -53,15 +53,6 @@ define([
 		sun.setRotation([-45, 45, 0]);
 		sun.addToWorld();
 
-		var camera = new Camera(45, 1, 0.1, 1000);
-		camera.lookAt(Vector3.ZERO, Vector3.UNIT_Y);
-		var camEntity = world.createEntity(camera, [0, 3, 40]);
-		camEntity.addToWorld();
-
-		var scriptComponent = new ScriptComponent();
-		scriptComponent.scripts.push(Scripts.create('MouseLookScript'));
-		camEntity.setComponent(scriptComponent);
-
 		document.body.appendChild(goo.renderer.domElement);
 
 		return goo;

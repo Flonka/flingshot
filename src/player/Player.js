@@ -5,7 +5,8 @@ define([
 	'goo/addons/p2pack/P2Component',
 	'goo/entities/components/ScriptComponent',
 
-	'weapons/GrappleHook'
+	'weapons/GrappleHook',
+	'player/FollowCamera'
 ], function (
 	Cylinder,
 	Material,
@@ -13,7 +14,8 @@ define([
 	P2Component,
 	ScriptComponent,
 
-	GrappleHook
+	GrappleHook,
+	FollowCamera
 	) {
 
 	'use strict';
@@ -53,8 +55,6 @@ define([
 
 		this.hook = new GrappleHook(world, this);
 
-		console.log(this.rigidBody.material);
-
 		this.controls = {
 			left: false,
 			right: false,
@@ -63,6 +63,8 @@ define([
 		};
 
 		this.addKeyBoardListeners();
+
+		this.camera = new FollowCamera(this);
 
 	};
 
