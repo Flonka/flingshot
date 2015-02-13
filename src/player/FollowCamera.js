@@ -2,12 +2,14 @@ define([
 	'goo/math/Vector3',
 	'goo/renderer/Camera',
 	'goo/scripts/Scripts',
-	'goo/entities/components/ScriptComponent'
+	'goo/entities/components/ScriptComponent',
+	'goo/addons/p2pack/P2Component'
 ], function (
 	Vector3,
 	Camera,
 	Scripts,
-	ScriptComponent
+	ScriptComponent,
+	P2Component
 	) {
 
 	'use strict';
@@ -22,15 +24,32 @@ define([
 		var camEntity = world.createEntity(camera, [0, 3, 40]);
 		camEntity.addToWorld();
 
-		var scriptComponent = new ScriptComponent();
-		var followScript = {
-			run: function(entity, tpf, context, parameters) {
-				var rbPos = this.player.rigidBody.position;
-				entity.setTranslation([rbPos[0], rbPos[1], entity.getTranslation().z]);
-			}.bind(this)
-		};
-		scriptComponent.scripts.push(followScript);
-		camEntity.set(scriptComponent);
+		var anchorEntity = world.createEntity();
+		anchorEntity.set(new P2Component({
+			mass: 0.1
+		}));
+		anchorEntity.addToWorld();
+		anchorEntity.attachChild(camEntity);
+
+		world.process();
+
+		var anchorBody = anchorEntity.p2Component.body;
+
+		var physicsWorld = anchorBody.world;
+
+		// Lock the anchor to the player.
+		var lock = new p2.LockConstraint(
+			anchorBody, 
+			player.rigidBody,
+			{
+				localOffsetB: [0,0],
+				localAngleB: 0
+			}
+		);
+
+		physicsWorld.addConstraint(lock);
+
+		
 	};
 
 	return FollowCamera;
