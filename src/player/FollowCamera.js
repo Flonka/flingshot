@@ -19,14 +19,26 @@ define([
 		var world = player.entity._world;
 		this.player = player;
 
+		this.mass = 15;
+
 		var camera = new Camera(45, 1, 0.1, 1000);
 		camera.lookAt(Vector3.ZERO, Vector3.UNIT_Y);
 		var camEntity = world.createEntity(camera, [0, 3, 40]);
+		this.camera = camera;
+
+		var lookAtScript = {
+			run: function (entity, tps, context, params) {
+				entity.camera.lookAt(this.player.getTranslation(), Vector3.UNIT_Y);
+			}.bind(this)
+		};
+		var camScript = new ScriptComponent();
+		camScript.scripts.push(lookAtScript);
+		camEntity.set(camScript);
 		camEntity.addToWorld();
 
 		var anchorEntity = world.createEntity();
 		anchorEntity.set(new P2Component({
-			mass: 0.1
+			mass: 0
 		}));
 		anchorEntity.addToWorld();
 		anchorEntity.attachChild(camEntity);
@@ -34,22 +46,31 @@ define([
 		world.process();
 
 		var anchorBody = anchorEntity.p2Component.body;
+		anchorBody.type = p2.Body.KINEMATIC;
 
 		var physicsWorld = anchorBody.world;
 
-		// Lock the anchor to the player.
-		var lock = new p2.LockConstraint(
-			anchorBody, 
-			player.rigidBody,
-			{
-				localOffsetB: [0,0],
-				localAngleB: 0
-			}
-		);
+		var followScript = {
+			run: function(entity, tps, ctx, params) {
+				var rb = entity.p2Component.body;
+				var rbPos = rb.position;
+				var playerPos = this.player.rigidBody.position;
+				var dx = playerPos[0] - rbPos[0];
+				var dy = playerPos[1] - rbPos[1];
 
-		physicsWorld.addConstraint(lock);
+				var d = Math.sqrt(dx * dx + dy * dy);
 
-		
+				rb.velocity[0] = dx * d;
+				rb.velocity[1] = dy * d;
+
+			}.bind(this)
+		};
+		var sc = new ScriptComponent();
+		sc.scripts.push(followScript);
+		anchorEntity.set(sc);
+
+
+
 	};
 
 	return FollowCamera;
