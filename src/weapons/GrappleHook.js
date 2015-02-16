@@ -136,7 +136,7 @@ define([
 		hookBody.velocity[1] = 0;
 		hookBody.force[0] = 0;
 		hookBody.force[1] = this.hookFireForce;
-		this.hook.transformComponent.transform.translation.setDirect([hookBody.position[0], hookBody.position[1], 0]);
+		this.hook.transformComponent.transform.translation.setDirect(hookBody.position[0], hookBody.position[1], 0);
 	};
 
 	return GrappleHook;
