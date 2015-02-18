@@ -22,6 +22,8 @@ define([
 
 	function Player(world) {
 
+		this.mass = 66.6;
+
 		this.material = new Material(ShaderLib.simpleColored);
 
 		this.material.uniforms.color = [1.0, 0, 0.5];
@@ -36,7 +38,7 @@ define([
 		);
 
 		this.entity.set(new P2Component({
-			mass: 66.6,
+			mass: this.mass,
 			shapes: [{
 				type: 'box',
 				width: this.width * 1.8,
@@ -44,6 +46,8 @@ define([
 			}],
 			offsetAngleX: Math.PI/2.0
 		}));
+
+		this.addScriptComponent();
 
 		this.entity.addToWorld();
 
@@ -56,17 +60,41 @@ define([
 		this.hook = new GrappleHook(world, this);
 
 		this.controls = {
+			moveMult: 0,
 			left: false,
 			right: false,
 			shoot: false,
 			jump: false,
 		};
 
+		this.jumpForce = 10000;
+		this.moveForce = 5000;
+
 		this.addKeyBoardListeners();
+
 
 		this.camera = new FollowCamera(this);
 
 	};
+
+
+	Player.prototype.addScriptComponent = function() {
+		var sc = new ScriptComponent();
+		var moveScript = {
+			run: function(entity, tps, context, params) {
+
+				this.rigidBody.force[0] += this.controls.moveMult * this.moveForce
+
+				if (this.controls.jump) {
+					this.rigidBody.force[1] += this.jumpForce;
+				}
+			}.bind(this)
+		};
+		sc.scripts.push(moveScript);
+		this.entity.set(sc);
+
+	};
+
 
 	Player.prototype.addKeyBoardListeners = function() {
 
@@ -77,19 +105,19 @@ define([
 				case 65:
 				case 37:
 					this.controls.left = true;
-					this.rigidBody.velocity[0] = -10;
+					this.controls.moveMult = -1;
 					break;
 				// Right
 				case 68:
 				case 39:
 					this.controls.right = true;
-					this.rigidBody.velocity[0] = 10;
+					this.controls.moveMult = 1;
 					break;
 				// Up
 				case 87:
 				case 38:
 					this.controls.jump = true;
-					this.hook.fire();
+					//this.hook.fire();
 					break;
 				// Down
 				case 83:
@@ -108,11 +136,13 @@ define([
 				case 65:
 				case 37:
 					this.controls.left = false;
+					this.controls.moveMult = 0;
 					break;
 				// Right
 				case 68:
 				case 39:
 					this.controls.right = false;
+					this.controls.moveMult = 0;
 					break;
 				// Up
 				case 87:
