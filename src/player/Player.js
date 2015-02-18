@@ -69,6 +69,7 @@ define([
 
 		this.jumpForce = 10000;
 		this.moveForce = 5000;
+		this.capXvelocity = 15;
 
 		this.addKeyBoardListeners();
 
@@ -83,16 +84,53 @@ define([
 		var moveScript = {
 			run: function(entity, tps, context, params) {
 
-				this.rigidBody.force[0] += this.controls.moveMult * this.moveForce
+				var applyMove = Math.abs(this.rigidBody.velocity[0]) < this.capXvelocity;
+				var inContact = false;
+				if (applyMove || this.controls.jump) {
+					inContact = this.checkIfInContact();
+				}
 
-				if (this.controls.jump) {
-					this.rigidBody.force[1] += this.jumpForce;
+				if (applyMove) {
+					this.move();
+				}
+
+				if (this.controls.jump && inContact === true) {
+					this.jump();
 				}
 			}.bind(this)
 		};
 		sc.scripts.push(moveScript);
 		this.entity.set(sc);
 
+	};
+
+	var yAxis = [0,1]
+	Player.prototype.checkIfInContact = function() {
+		var playerRb = this.rigidBody;
+		var contactEquations = playerRb.world.narrowphase.contactEquations;
+		var l = contactEquations.length;
+		for (var i = 0; i < l; i++) {
+			var c = contactEquations[i];
+			if (c.bodyA === playerRb || c.bodyB === playerRb) {
+				var d = p2.vec2.dot(c.normalA, yAxis); // Normal dot Y-axis
+				if (c.bodyA === playerRb) {
+					d *= -1;
+				}
+				if (d > 0.5) {
+					return true;
+				} 
+			}
+		}
+		return false;
+	};
+
+	Player.prototype.move = function() {
+		this.rigidBody.force[0] += this.controls.moveMult * this.moveForce;
+	};
+
+	Player.prototype.jump = function() {
+		this.rigidBody.force[1] += this.jumpForce;
+		console.log('Jumped!');
 	};
 
 
