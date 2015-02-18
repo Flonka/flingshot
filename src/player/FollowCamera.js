@@ -20,6 +20,7 @@ define([
 		this.player = player;
 
 		this.mass = 15;
+		this.minFollowMultiplier = 0.7;
 
 		var camera = new Camera(45, 1, 0.1, 1000);
 		camera.lookAt(Vector3.ZERO, Vector3.UNIT_Y);
@@ -28,7 +29,7 @@ define([
 
 		var lookAtScript = {
 			run: function (entity, tps, context, params) {
-				entity.camera.lookAt(this.player.getTranslation(), Vector3.UNIT_Y);
+				this.camera.lookAt(this.player.entity.getTranslation(), Vector3.UNIT_Y);
 			}.bind(this)
 		};
 		var camScript = new ScriptComponent();
@@ -59,6 +60,7 @@ define([
 				var dy = playerPos[1] - rbPos[1];
 
 				var d = Math.sqrt(dx * dx + dy * dy);
+				d = Math.max(this.minFollowMultiplier, d);
 
 				rb.velocity[0] = dx * d;
 				rb.velocity[1] = dy * d;
@@ -68,8 +70,6 @@ define([
 		var sc = new ScriptComponent();
 		sc.scripts.push(followScript);
 		anchorEntity.set(sc);
-
-
 
 	};
 
