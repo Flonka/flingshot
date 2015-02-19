@@ -67,7 +67,7 @@ define([
 			jump: false,
 		};
 
-		this.jumpForce = 10000;
+		this.jumpForce = 20000;
 		this.moveForce = 5000;
 		this.capXvelocity = 15;
 
@@ -104,7 +104,7 @@ define([
 
 	};
 
-	var yAxis = [0,1]
+	var yAxis = [0,1];
 	Player.prototype.checkIfInContact = function() {
 		var playerRb = this.rigidBody;
 		var contactEquations = playerRb.world.narrowphase.contactEquations;
@@ -130,6 +130,7 @@ define([
 
 	Player.prototype.jump = function() {
 		this.rigidBody.force[1] += this.jumpForce;
+		this.rigidBody.position[1] += 0.07;
 		console.log('Jumped!');
 	};
 
