@@ -90,9 +90,11 @@ define([
 					inContact = this.checkIfInContact();
 				}
 
+
 				if (applyMove) {
-					this.move();
+					this.move(inContact);
 				}
+
 
 				if (this.controls.jump && inContact === true) {
 					this.jump();
@@ -124,8 +126,12 @@ define([
 		return false;
 	};
 
-	Player.prototype.move = function() {
-		this.rigidBody.force[0] += this.controls.moveMult * this.moveForce;
+	Player.prototype.move = function(onGround) {
+		var force = this.moveForce;
+		if (!onGround) {
+			force *= 0.3;
+		}
+		this.rigidBody.force[0] += this.controls.moveMult * force;
 	};
 
 	Player.prototype.jump = function() {
@@ -197,6 +203,9 @@ define([
 			};
 		}.bind(this);
 
+		window.onmousedown = function(event) {
+			console.debug(event);
+		}.bind(this);
 	};
 
 	return Player;
