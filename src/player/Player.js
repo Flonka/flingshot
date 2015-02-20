@@ -86,7 +86,7 @@ define([
 
 				var applyMove = Math.abs(this.rigidBody.velocity[0]) < this.capXvelocity;
 				var inContact = false;
-				if (applyMove || this.controls.jump) {
+				if (applyMove === true || this.controls.jump === true) {
 					inContact = this.checkIfInContact();
 				}
 
@@ -119,6 +119,7 @@ define([
 					d *= -1;
 				}
 				if (d > 0.5) {
+					console.debug('Touching ground');
 					return true;
 				} 
 			}
@@ -205,6 +206,11 @@ define([
 
 		window.onmousedown = function(event) {
 			console.debug(event);
+			this.hook.fire();
+		}.bind(this);
+
+		window.onmouseup = function(event) {
+			this.hook.releaseRope();
 		}.bind(this);
 	};
 
