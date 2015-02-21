@@ -84,7 +84,7 @@ define([
 		var moveScript = {
 			run: function(entity, tps, context, params) {
 
-				var applyMove = Math.abs(this.rigidBody.velocity[0]) < this.capXvelocity;
+				var applyMove = this.controls.moveMult !== 0;
 				var inContact = false;
 				if (applyMove === true || this.controls.jump === true) {
 					inContact = this.checkIfInContact();
@@ -128,6 +128,12 @@ define([
 	};
 
 	Player.prototype.move = function(onGround) {
+		
+		var applyMove = Math.abs(this.rigidBody.velocity[0]) < this.capXvelocity;
+		if (!applyMove) {
+			return;
+		}
+
 		var force = this.moveForce;
 		if (!onGround) {
 			force *= 0.3;
