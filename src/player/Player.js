@@ -52,7 +52,8 @@ define([
 				width: this.width * 1.8,
 				height: this.height
 			}],
-			offsetAngleX: Math.PI/2.0
+			offsetAngleX: Math.PI/2.0,
+			fixedRotation: Config.player.fixedRotation
 		}));
 
 		this.addScriptComponent();
