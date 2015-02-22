@@ -9,7 +9,8 @@ define([
 	'goo/math/Plane',
 
 	'weapons/GrappleHook',
-	'player/FollowCamera'
+	'player/FollowCamera',
+	'Config'
 ], function (
 	Cylinder,
 	Material,
@@ -21,7 +22,8 @@ define([
 	Plane,
 
 	GrappleHook,
-	FollowCamera
+	FollowCamera,
+	Config
 	) {
 
 	'use strict';
@@ -62,6 +64,10 @@ define([
 		this.entity.p2Component.body.allowSleep = false;
 		// Convenience
 		this.rigidBody = this.entity.p2Component.body;
+
+		for (var i = 0; i < this.rigidBody.shapes.length; i++) {
+			this.rigidBody.shapes[i].collisionGroup = Config.collisionGroup.player;
+		}
 
 		this.hook = new GrappleHook(world, this);
 
@@ -142,7 +148,7 @@ define([
 
 		var force = this.moveForce;
 		if (!onGround) {
-			force *= 0.3;
+			force *= Config.player.airMoveMult;
 		}
 		this.rigidBody.force[0] += this.controls.moveMult * force;
 	};
@@ -230,7 +236,7 @@ define([
 			workingTarget[1] = pickVec.y;
 			p2.vec2.subtract(workingTarget, workingTarget, this.rigidBody.position);
 			p2.vec2.normalize(workingTarget, workingTarget);
-			
+
 			this.hook.fire(workingTarget);
 		}.bind(this);
 

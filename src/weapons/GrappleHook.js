@@ -50,15 +50,23 @@ define([
 		var hookShape = hookBody.shapes[0];
 		hookShape.sensor = true;
 		hookBody.world.on('beginContact', function (event) {
+
 			var hookBody = this.hook.p2Component.body;
 			if (event.bodyA == hookBody) {
+				if (event.bodyB == this.player.rigidBody) {
+					return;
+				}
 				this.createRope(event, true);
 			} else if (event.bodyB == hookBody) {
+				if (event.bodyA == this.player.rigidBody) {
+					return;
+				}
 				this.createRope(event, false);
+
 			}
 		}.bind(this));
 
-		this.disableHook();		
+		this.disableHook();
 
 		this.activeSpring = null;
 	};
