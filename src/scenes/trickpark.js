@@ -45,6 +45,10 @@ require([
 
 	addBlock(19, 4, [5, 15, 0], gooRunner.world);
 
+	addBlock(19, 4, [-20, 15, 0], gooRunner.world);
+
+	addBlock(19, 4, [0, 30, 0], gooRunner.world);
+
 	ground.addToWorld();
 
 	gooRunner.startGameLoop();

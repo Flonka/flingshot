@@ -4,6 +4,9 @@ define([
 	'goo/renderer/shaders/ShaderLib',
 	'goo/addons/p2pack/P2Component',
 	'goo/entities/components/ScriptComponent',
+	'goo/math/Ray',
+	'goo/math/Vector3',
+	'goo/math/Plane',
 
 	'weapons/GrappleHook',
 	'player/FollowCamera'
@@ -13,6 +16,9 @@ define([
 	ShaderLib,
 	P2Component,
 	ScriptComponent,
+	Ray,
+	Vector3,
+	Plane,
 
 	GrappleHook,
 	FollowCamera
@@ -74,7 +80,7 @@ define([
 		this.addKeyBoardListeners();
 
 
-		this.camera = new FollowCamera(this);
+		this.followCamera = new FollowCamera(this);
 
 	};
 
@@ -210,9 +216,22 @@ define([
 			};
 		}.bind(this);
 
+		var workingTarget = [0, 1];
+		var pickRay = new Ray();
+		var pickVec = new Vector3();
+		var pickPlane = new Plane(new Vector3(0,0,1), 0);
 		window.onmousedown = function(event) {
-			console.debug(event);
-			this.hook.fire();
+
+			var canvas = this.entity._world.gooRunner.renderer.domElement;
+			this.followCamera.camera.getPickRay(event.x, event.y, canvas.width, canvas.height, pickRay);
+			pickRay.intersectsPlane(pickPlane, pickVec);
+
+			workingTarget[0] = pickVec.x;
+			workingTarget[1] = pickVec.y;
+			p2.vec2.subtract(workingTarget, workingTarget, this.rigidBody.position);
+			p2.vec2.normalize(workingTarget, workingTarget);
+			
+			this.hook.fire(workingTarget);
 		}.bind(this);
 
 		window.onmouseup = function(event) {

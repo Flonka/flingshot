@@ -120,7 +120,7 @@ define([
 		this.activeSpring = spring;
 	};
 
-	GrappleHook.prototype.fire = function() {
+	GrappleHook.prototype.fire = function(direction) {
 		
 		this.releaseRope();
 		
@@ -131,11 +131,12 @@ define([
 		var playerT = this.player.entity.transformComponent.worldTransform.translation;
 		hookBody.wakeUp();
 		hookBody.position[0] = playerT[0];
-		hookBody.position[1] = playerT[1] + this.player.height * 0.52 + this.hookRadius + 1;
+		//hookBody.position[1] = playerT[1] + this.player.height * 0.52 + this.hookRadius + 1;
+		hookBody.position[1] = playerT[1];
 		hookBody.velocity[0] = 0;
 		hookBody.velocity[1] = 0;
-		hookBody.force[0] = 0;
-		hookBody.force[1] = this.hookFireForce;
+		hookBody.force[0] = this.hookFireForce * direction[0];
+		hookBody.force[1] = this.hookFireForce * direction[1];
 		this.hook.transformComponent.transform.translation.setDirect(hookBody.position[0], hookBody.position[1], 0);
 	};
 
