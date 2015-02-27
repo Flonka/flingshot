@@ -56,26 +56,16 @@ define([
 		hookShape.collisionGroup = Config.collisionGroup.bullet;
 		hookShape.collisionMask = Config.collisionGroup.ground;
 
-		hookBody.world.on('beginContact', function (event) {
-
-			if (event.bodyA === event.bodyB) {
-				console.log('end contact with oneself??');
-				return;
-			}
+		hookBody.world.on('impact', function (event) {
 
 			var hookBody = this.hook.p2Component.body;
-			if (event.bodyA == hookBody) {
-				if (event.bodyB == this.player.rigidBody) {
-					return;
-				}
-				this.createRope(event, true);
-			} else if (event.bodyB == hookBody) {
-				if (event.bodyA == this.player.rigidBody) {
-					return;
-				}
-				this.createRope(event, false);
 
+			if (event.bodyA === hookBody) {
+				this.createRope(event, true);
+			} else if (event.bodyB === hookBody) {
+				this.createRope(event, false);
 			}
+
 		}.bind(this));
 
 		this.disableHook();
@@ -85,7 +75,7 @@ define([
 
 	GrappleHook.prototype.disableHook = function() {
 		var hookBody = this.hook.p2Component.body;
-		this.player.rigidBody.world.removeBody(hookBody);
+		hookBody.world.removeBody(hookBody);
 		this.material.uniforms.color = [0, 1, 0.2];
 	};
 
@@ -103,44 +93,47 @@ define([
 		}
 	};
 
+	var anchorVec = [0,0];
 	GrappleHook.prototype.createRope = function(contactEvent, hookIsBodyA) {
 
 		// TODO: Create Rope-like structure, now testing with a spring.
 
-		console.log('Hook hit: ', contactEvent);
-		console.log(contactEvent.contactEquations);
+		var equation = contactEvent.contactEquation;
+		console.log('A', equation.contactPointA);
+		console.log('B', equation.contactPointB);
+		console.log('Penetration', equation.penetrationVec);
 
+		// Using the only the first contact equation for the anchor pos.
+		var targetBody, contactPoint, hookBody;
 		if (hookIsBodyA) {
-
-			console.log(contactEvent.bodyA.position);
-			console.log(this.hook.p2Component.body.interpolatedPosition);
-
-			var spring = new p2.LinearSpring(
-				this.player.rigidBody, 
-				contactEvent.bodyB, {
-					restLength: 1,
-					stiffness: 300,
-					localAnchorA: [0, this.player.height * 0.5],
-					worldAnchorB: this.hook.p2Component.body.position
-				});
+			console.log('hook is body A!');
+			targetBody = contactEvent.bodyB;
+			hookBody = contactEvent.bodyA;
+			contactPoint = equation.contactPointB;
 		} else {
-
-			console.log(contactEvent.bodyB.position);
-			console.log(this.hook.p2Component.body.interpolatedPosition);
-
-			var spring = new p2.LinearSpring(
-				this.player.rigidBody, 
-				contactEvent.bodyA, {
-					restLength: 1,
-					stiffness: 300,
-					localAnchorA: [0, this.player.height * 0.5],
-					worldAnchorB: this.hook.p2Component.body.position
-				});
+			targetBody = contactEvent.bodyA;
+			hookBody = contactEvent.bodyB;
+			contactPoint = equation.contactPointA;
 		}
 
-		this.disableHook();
+		p2.vec2.add(anchorVec, targetBody.position, contactPoint)
 
-		this.player.rigidBody.world.addSpring(spring);
+		console.log('ankare', anchorVec);
+		console.log('diff', p2.vec2.subtract([0,0], anchorVec, contactEvent.bodyA.position));
+
+		hookBody.position = anchorVec;
+
+		var spring = new p2.LinearSpring(
+			this.player.rigidBody,
+			targetBody, {
+				restLength: 1,
+				stiffness: 300,
+				localAnchorA: [0, this.player.height * 0.5],
+				worldAnchorB: anchorVec
+			});
+
+		this.disableHook();
+		targetBody.world.addSpring(spring);
 		this.activeSpring = spring;
 	};
 
