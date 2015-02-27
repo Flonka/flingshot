@@ -55,7 +55,7 @@ define([
 		this.ropeEntities = [];
 		var ropeRadius = this.hookRadius * 0.45;
 		var lastBody = null;
-		var ropeCount = 50;
+		var ropeCount = 25;
 		for (var i=0; i < ropeCount; i++) {
 			var r = world.createEntity(
 				new Sphere(8, 8, ropeRadius),
@@ -88,14 +88,9 @@ define([
 			this.ropeEntities.push(r);
 		}
 
-		// Have rope follow player
-		var b = this.ropeEntities[0].p2Component.body;
-		this.ropeFollowConstraint = new p2.DistanceConstraint(
-			b,
-			this.player.rigidBody,
-			{distance: 1.0}
-		);
-		b.world.addConstraint(this.ropeFollowConstraint);
+		this.ropeConstraint = null;
+
+		this.setRopeConstraint(this.player.rigidBody, this.player.rigidBody.position);
 
 		world.process();
 
@@ -122,6 +117,34 @@ define([
 		this.activeSpring = null;
 	};
 
+	GrappleHook.prototype.setRopeConstraint = function(body, position) {
+
+		this.removeRopeConstraint();
+
+		var ropeBody = this.ropeEntities[0].p2Component.body;
+
+		// Set the position of the rope
+		ropeBody.position = position;
+
+		var c = new p2.RevoluteConstraint(
+			ropeBody,
+			body,
+			{
+				worldPivot: position
+			}
+		);
+
+		ropeBody.world.addConstraint(c);
+		this.ropeConstraint = c;
+	};
+
+	GrappleHook.prototype.removeRopeConstraint = function() {
+		if (this.ropeConstraint) {
+			var world = this.ropeConstraint.bodyA.world;
+			world.removeConstraint(this.ropeConstraint);
+		}
+	};
+
 	GrappleHook.prototype.disableHook = function() {
 		var hookBody = this.hook.p2Component.body;
 		hookBody.world.removeBody(hookBody);
@@ -145,8 +168,6 @@ define([
 	var anchorVec = [0,0];
 	GrappleHook.prototype.createRope = function(contactEvent, hookIsBodyA) {
 
-		// TODO: Create Rope-like structure, now testing with a spring.
-
 		var equation = contactEvent.contactEquation;
 
 		// Using the only the first contact equation for the anchor pos.
@@ -163,7 +184,7 @@ define([
 
 		p2.vec2.add(anchorVec, targetBody.position, contactPoint)
 
-		// Only to get correct visuals
+		// Only to get correct debug visuals
 		hookBody.position = anchorVec;
 
 		var spring = new p2.LinearSpring(
@@ -173,7 +194,10 @@ define([
 				stiffness: 300,
 				localAnchorA: [0, this.player.height * 0.5],
 				worldAnchorB: anchorVec
-			});
+			}
+		);
+
+		this.setRopeConstraint(targetBody, anchorVec);
 
 		this.disableHook();
 		targetBody.world.addSpring(spring);
@@ -189,9 +213,7 @@ define([
 
 		this.enableHook();
 
-		if (this.ropeFollowConstraint) {
-			hookBody.world.removeConstraint(this.ropeFollowConstraint);
-		}
+		this.setRopeConstraint(hookBody, hookBody.position);
 
 		var playerT = this.player.entity.transformComponent.worldTransform.translation;
 		hookBody.wakeUp();
