@@ -16,7 +16,7 @@ define([
 		airMoveMult: 0.1,
 		fixedRotation: true
 	};
-	
+
 
 	return Config;
 });

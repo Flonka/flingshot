@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import SimpleHTTPServer
+import SocketServer
 
 class MyHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -13,4 +14,6 @@ class MyHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    SimpleHTTPServer.test(HandlerClass=MyHTTPRequestHandler)
+	handler = MyHTTPRequestHandler
+	httpd = SocketServer.TCPServer(("", 9000), handler)
+	httpd.serve_forever()

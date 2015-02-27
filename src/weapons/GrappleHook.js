@@ -30,8 +30,8 @@ define([
 
 		this.hookFireForce = 10000;
 
-
 		this.player = player;
+
 		var material = new Material(ShaderLib.simpleColored);
 		material.uniforms.color = [0.89, 0, 0];
 		this.hook = world.createEntity(
@@ -49,7 +49,56 @@ define([
 
 		this.material = material;
 
+		var ropeMaterial = new Material(ShaderLib.simpleColored);
+		ropeMaterial.uniforms.color = [0.5, 0.5, 0];
+
+		this.ropeEntities = [];
+		var ropeRadius = this.hookRadius * 0.45;
+		var lastBody = null;
+		var ropeCount = 50;
+		for (var i=0; i < ropeCount; i++) {
+			var r = world.createEntity(
+				new Sphere(8, 8, ropeRadius),
+				ropeMaterial
+			);
+			r.set(new P2Component({
+				mass: this.mass * 0.05,
+				shapes: [{
+					type: 'circle',
+					radius: ropeRadius
+				}]
+			}));
+			r.addToWorld();
+			world.process();
+			var b = r.p2Component.body;
+			var s = b.shapes[0];
+			s.collisionGroup = Config.collisionGroup.bullet;
+			s.collisionMask = Config.collisionGroup.ground;
+
+			if (lastBody) {
+				var c = new p2.DistanceConstraint(b, lastBody);
+				c.lowerLimit = 0;
+				c.lowerLimitEnabled = true;
+				c.upperLimit = 4.0 * ropeRadius;
+				c.upperLimitEnabled = true;
+				b.world.addConstraint(c);
+			}
+			
+			lastBody = b;
+			this.ropeEntities.push(r);
+		}
+
+		// Have rope follow player
+		var b = this.ropeEntities[0].p2Component.body;
+		this.ropeFollowConstraint = new p2.DistanceConstraint(
+			b,
+			this.player.rigidBody,
+			{distance: 1.0}
+		);
+		b.world.addConstraint(this.ropeFollowConstraint);
+
 		world.process();
+
 		var hookBody = this.hook.p2Component.body;
 		var hookShape = hookBody.shapes[0];
 
@@ -99,14 +148,10 @@ define([
 		// TODO: Create Rope-like structure, now testing with a spring.
 
 		var equation = contactEvent.contactEquation;
-		console.log('A', equation.contactPointA);
-		console.log('B', equation.contactPointB);
-		console.log('Penetration', equation.penetrationVec);
 
 		// Using the only the first contact equation for the anchor pos.
 		var targetBody, contactPoint, hookBody;
 		if (hookIsBodyA) {
-			console.log('hook is body A!');
 			targetBody = contactEvent.bodyB;
 			hookBody = contactEvent.bodyA;
 			contactPoint = equation.contactPointB;
@@ -118,9 +163,7 @@ define([
 
 		p2.vec2.add(anchorVec, targetBody.position, contactPoint)
 
-		console.log('ankare', anchorVec);
-		console.log('diff', p2.vec2.subtract([0,0], anchorVec, contactEvent.bodyA.position));
-
+		// Only to get correct visuals
 		hookBody.position = anchorVec;
 
 		var spring = new p2.LinearSpring(
@@ -138,11 +181,17 @@ define([
 	};
 
 	GrappleHook.prototype.fire = function(direction) {
+
 		
 		this.releaseRope();
-		
+
 		var hookBody = this.hook.p2Component.body;
+
 		this.enableHook();
+
+		if (this.ropeFollowConstraint) {
+			hookBody.world.removeConstraint(this.ropeFollowConstraint);
+		}
 
 		var playerT = this.player.entity.transformComponent.worldTransform.translation;
 		hookBody.wakeUp();
