@@ -1,6 +1,7 @@
 require([
 	'scenes/SceneInitializer',
 	'player/Player',
+	'Config',
 
 	'goo/shapes/Quad',
 	'goo/shapes/Box',
@@ -12,6 +13,7 @@ require([
 	function (
 		SceneInitializer,
 		Player,
+		Config,
 
 		Quad,
 		Box,
@@ -41,6 +43,10 @@ require([
 		}]
 	}));
 
+	ground.addToWorld();
+	gooRunner.world.process();
+	setGroundCollisionRules(ground.p2Component.body.shapes[0]);
+
 	addBlock(10, 5, [-10, 2.5, 0], gooRunner.world);
 
 	addBlock(19, 4, [5, 15, 0], gooRunner.world);
@@ -48,8 +54,6 @@ require([
 	addBlock(19, 4, [-20, 15, 0], gooRunner.world);
 
 	addBlock(19, 4, [0, 30, 0], gooRunner.world);
-
-	ground.addToWorld();
 
 	gooRunner.startGameLoop();
 
@@ -76,6 +80,15 @@ require([
 		}));
 
 		leftBlock.addToWorld();
+
+		world.process();
+
+		setGroundCollisionRules(leftBlock.p2Component.body.shapes[0]);
+	};
+
+	function setGroundCollisionRules(shape) {
+		shape.collisionGroup = Config.collisionGroup.ground;
+		shape.collisionMask = Config.collisionGroup.player | Config.collisionGroup.bullet | Config.collisionGroup.ground;
 	};
 
 });

@@ -5,6 +5,7 @@ define([
 	'goo/renderer/Camera',
 	'goo/scripts/Scripts',
 	'goo/entities/components/ScriptComponent',
+	'goo/util/GameUtils',
 
 	'goo/addons/p2pack/P2System'
 ], function (
@@ -14,6 +15,7 @@ define([
 	Camera,
 	Scripts,
 	ScriptComponent,
+	GameUtils,
 
 	P2System
 	) {
@@ -33,7 +35,8 @@ define([
 				color: '#FFF'
 			},
 			manuallyStartGameLoop: true,
-			showStats: true
+			showStats: true,
+			debugKeys: true
 		};
 		
 		var goo = new GooRunner(options);

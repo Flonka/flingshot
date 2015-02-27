@@ -67,7 +67,9 @@ define([
 		this.rigidBody = this.entity.p2Component.body;
 
 		for (var i = 0; i < this.rigidBody.shapes.length; i++) {
-			this.rigidBody.shapes[i].collisionGroup = Config.collisionGroup.player;
+			var shape = this.rigidBody.shapes[i];
+			shape.collisionGroup = Config.collisionGroup.player;
+			shape.collisionMask = Config.collisionGroup.ground;
 		}
 
 		this.hook = new GrappleHook(world, this);
@@ -221,6 +223,7 @@ define([
 				default:
 					console.log('unbound : ', event.keyCode);
 			};
+
 		}.bind(this);
 
 		var workingTarget = [0, 1];
@@ -232,7 +235,6 @@ define([
 			var canvas = this.entity._world.gooRunner.renderer.domElement;
 			this.followCamera.camera.getPickRay(event.x, event.y, canvas.width, canvas.height, pickRay);
 			pickRay.intersectsPlane(pickPlane, pickVec);
-
 			workingTarget[0] = pickVec.x;
 			workingTarget[1] = pickVec.y;
 			p2.vec2.subtract(workingTarget, workingTarget, this.rigidBody.position);

@@ -5,7 +5,9 @@ define([
 	'goo/addons/p2pack/P2Component',
 	'goo/shapes/Sphere',
 	'goo/renderer/Material',
-	'goo/renderer/shaders/ShaderLib'
+	'goo/renderer/shaders/ShaderLib',
+
+	'Config'
 ], function (
 	Vector3,
 	Scripts,
@@ -13,7 +15,9 @@ define([
 	P2Component,
 	Sphere,
 	Material,
-	ShaderLib
+	ShaderLib,
+
+	Config
 	) {
 
 	'use strict';
@@ -48,8 +52,16 @@ define([
 		world.process();
 		var hookBody = this.hook.p2Component.body;
 		var hookShape = hookBody.shapes[0];
-		hookShape.sensor = true;
+
+		hookShape.collisionGroup = Config.collisionGroup.bullet;
+		hookShape.collisionMask = Config.collisionGroup.ground;
+
 		hookBody.world.on('beginContact', function (event) {
+
+			if (event.bodyA === event.bodyB) {
+				console.log('end contact with oneself??');
+				return;
+			}
 
 			var hookBody = this.hook.p2Component.body;
 			if (event.bodyA == hookBody) {
@@ -86,12 +98,7 @@ define([
 	GrappleHook.prototype.releaseRope = function() {
 		var world = this.player.rigidBody.world;
 		if (this.activeSpring) {
-			for (var i = 0; i < world.springs.length; i++) {
-				if (this.activeSpring == world.springs[i]) {
-					world.springs.splice(i, 1);
-					break;
-				}
-			}
+			world.removeSpring(this.activeSpring);
 			this.material.uniforms.color = [0, 0.6, 0.2];
 		}
 	};
@@ -101,8 +108,13 @@ define([
 		// TODO: Create Rope-like structure, now testing with a spring.
 
 		console.log('Hook hit: ', contactEvent);
+		console.log(contactEvent.contactEquations);
 
 		if (hookIsBodyA) {
+
+			console.log(contactEvent.bodyA.position);
+			console.log(this.hook.p2Component.body.interpolatedPosition);
+
 			var spring = new p2.LinearSpring(
 				this.player.rigidBody, 
 				contactEvent.bodyB, {
@@ -112,6 +124,10 @@ define([
 					worldAnchorB: this.hook.p2Component.body.position
 				});
 		} else {
+
+			console.log(contactEvent.bodyB.position);
+			console.log(this.hook.p2Component.body.interpolatedPosition);
+
 			var spring = new p2.LinearSpring(
 				this.player.rigidBody, 
 				contactEvent.bodyA, {
@@ -135,11 +151,9 @@ define([
 		var hookBody = this.hook.p2Component.body;
 		this.enableHook();
 
-		hookBody.shapes[0].sensor = true;
 		var playerT = this.player.entity.transformComponent.worldTransform.translation;
 		hookBody.wakeUp();
 		hookBody.position[0] = playerT[0];
-		//hookBody.position[1] = playerT[1] + this.player.height * 0.52 + this.hookRadius + 1;
 		hookBody.position[1] = playerT[1];
 		hookBody.velocity[0] = 0;
 		hookBody.velocity[1] = 0;
