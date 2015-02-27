@@ -192,8 +192,11 @@ define([
 
 	GrappleHook.prototype.enableHook = function() {
 		var hookBody = this.hook.p2Component.body;
-		this.player.rigidBody.world.addBody(hookBody);
-		this.material.uniforms.color = [0.89, 0, 0];
+		if (!hookBody.world) {
+			var world = this.player.rigidBody.world;
+			world.addBody(hookBody);
+			this.material.uniforms.color = [0.89, 0, 0];
+		}
 	};
 
 	var anchorPos = [0,0];
@@ -235,15 +238,14 @@ define([
 
 		this.enableHook();
 
-		var playerT = this.player.entity.transformComponent.worldTransform.translation;
+		var playerPos = this.player.rigidBody.position;
 		hookBody.wakeUp();
-		hookBody.position[0] = playerT[0];
-		hookBody.position[1] = playerT[1];
+		hookBody.position[0] = playerPos[0];
+		hookBody.position[1] = playerPos[1];
 		hookBody.velocity[0] = 0;
 		hookBody.velocity[1] = 0;
 		hookBody.force[0] = this.hookFireForce * direction[0];
 		hookBody.force[1] = this.hookFireForce * direction[1];
-		this.hook.transformComponent.transform.translation.setDirect(hookBody.position[0], hookBody.position[1], 0);
 
 		this.setRopeConstraint(hookBody, hookBody.position);
 	};

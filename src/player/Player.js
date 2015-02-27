@@ -105,11 +105,9 @@ define([
 					inContact = this.checkIfInContact();
 				}
 
-
 				if (applyMove) {
 					this.move(inContact);
 				}
-
 
 				if (this.controls.jump && inContact === true) {
 					this.jump();
