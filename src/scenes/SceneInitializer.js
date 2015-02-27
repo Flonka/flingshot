@@ -36,7 +36,8 @@ define([
 			},
 			manuallyStartGameLoop: true,
 			showStats: true,
-			debugKeys: true
+			debugKeys: true,
+			useTryCatch: false // Optimization, use try catch for debug i guess.
 		};
 		
 		var goo = new GooRunner(options);
@@ -44,7 +45,9 @@ define([
 
 		var world = goo.world;
 
-		var p2System = new P2System();
+		var p2System = new P2System({
+			substeps: 0
+		});
 		world.setSystem(p2System);
 
 		// Set some default settings in the physics world

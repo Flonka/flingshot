@@ -28,7 +28,7 @@ define([
 
 		this.hookRadius = 0.3;
 
-		this.hookFireForce = 10000;
+		this.hookFireForce = 5000;
 
 		this.player = player;
 
@@ -49,14 +49,18 @@ define([
 
 		this.material = material;
 
+		// Rope creation
+
 		var ropeMaterial = new Material(ShaderLib.simpleColored);
 		ropeMaterial.uniforms.color = [0.5, 0.5, 0];
 
 		this.ropeEntities = [];
+		this.ropeCount = 25;
+		
 		var ropeRadius = this.hookRadius * 0.45;
 		var lastBody = null;
-		var ropeCount = 25;
-		for (var i=0; i < ropeCount; i++) {
+
+		for (var i=0; i < this.ropeCount; i++) {
 			var r = world.createEntity(
 				new Sphere(8, 8, ropeRadius),
 				ropeMaterial
@@ -89,10 +93,13 @@ define([
 		}
 
 		this.ropeConstraint = null;
+		this.playerConstraint = null;
 
 		this.setRopeConstraint(this.player.rigidBody, this.player.rigidBody.position);
 
 		world.process();
+
+		// Set up the hook physics to init state, add handlers
 
 		var hookBody = this.hook.p2Component.body;
 		var hookShape = hookBody.shapes[0];
@@ -113,8 +120,6 @@ define([
 		}.bind(this));
 
 		this.disableHook();
-
-		this.activeSpring = null;
 	};
 
 	GrappleHook.prototype.setRopeConstraint = function(body, position) {
@@ -139,9 +144,43 @@ define([
 	};
 
 	GrappleHook.prototype.removeRopeConstraint = function() {
-		if (this.ropeConstraint) {
+		if (this.ropeConstraint !== null) {
 			var world = this.ropeConstraint.bodyA.world;
 			world.removeConstraint(this.ropeConstraint);
+			this.ropeConstraint = null;
+		}
+	};
+
+	var pivotPos = [0, 0];
+	GrappleHook.prototype.setPlayerConstraint = function() {
+
+		this.removePlayerConstraint();
+
+		// Grab the last for now..
+		var ropeBody = this.ropeEntities[this.ropeCount - 1].p2Component.body;
+		var playerBody = this.player.rigidBody;
+		pivotPos = playerBody.position;
+		pivotPos[1] += this.player.height * 0.5;
+
+		var c = new p2.RevoluteConstraint(
+			ropeBody,
+			playerBody,
+			{
+				worldPivot: pivotPos
+			}
+		);
+
+		playerBody.world.addConstraint(c);
+
+		this.playerConstraint = c;
+	};
+
+	GrappleHook.prototype.removePlayerConstraint = function() {
+
+		if (this.playerConstraint !== null) {
+			var world = this.playerConstraint.bodyA.world;
+			world.removeConstraint(this.playerConstraint);
+			this.playerConstraint = null;
 		}
 	};
 
@@ -157,15 +196,7 @@ define([
 		this.material.uniforms.color = [0.89, 0, 0];
 	};
 
-	GrappleHook.prototype.releaseRope = function() {
-		var world = this.player.rigidBody.world;
-		if (this.activeSpring) {
-			world.removeSpring(this.activeSpring);
-			this.material.uniforms.color = [0, 0.6, 0.2];
-		}
-	};
-
-	var anchorVec = [0,0];
+	var anchorPos = [0,0];
 	GrappleHook.prototype.createRope = function(contactEvent, hookIsBodyA) {
 
 		var equation = contactEvent.contactEquation;
@@ -182,38 +213,27 @@ define([
 			contactPoint = equation.contactPointA;
 		}
 
-		p2.vec2.add(anchorVec, targetBody.position, contactPoint)
+		p2.vec2.add(anchorPos, targetBody.position, contactPoint)
 
 		// Only to get correct debug visuals
-		hookBody.position = anchorVec;
+		hookBody.position = anchorPos;
 
-		var spring = new p2.LinearSpring(
-			this.player.rigidBody,
-			targetBody, {
-				restLength: 1,
-				stiffness: 300,
-				localAnchorA: [0, this.player.height * 0.5],
-				worldAnchorB: anchorVec
-			}
-		);
+		this.setRopeConstraint(targetBody, anchorPos);
 
-		this.setRopeConstraint(targetBody, anchorVec);
+		console.debug('Anchored ', anchorPos);
+		
+		//this.setPlayerConstraint();
 
 		this.disableHook();
-		targetBody.world.addSpring(spring);
-		this.activeSpring = spring;
 	};
 
 	GrappleHook.prototype.fire = function(direction) {
-
 		
-		this.releaseRope();
+		this.removePlayerConstraint();
 
 		var hookBody = this.hook.p2Component.body;
 
 		this.enableHook();
-
-		this.setRopeConstraint(hookBody, hookBody.position);
 
 		var playerT = this.player.entity.transformComponent.worldTransform.translation;
 		hookBody.wakeUp();
@@ -224,6 +244,8 @@ define([
 		hookBody.force[0] = this.hookFireForce * direction[0];
 		hookBody.force[1] = this.hookFireForce * direction[1];
 		this.hook.transformComponent.transform.translation.setDirect(hookBody.position[0], hookBody.position[1], 0);
+
+		this.setRopeConstraint(hookBody, hookBody.position);
 	};
 
 	return GrappleHook;

@@ -184,12 +184,11 @@ define([
 				case 87:
 				case 38:
 					this.controls.jump = true;
-					//this.hook.fire();
 					break;
 				// Down
 				case 83:
 				case 40:
-					this.hook.releaseRope();
+					this.hook.removePlayerConstraint();
 					break;
 				default:
 					console.log('unbound : ', event.keyCode);
@@ -244,7 +243,7 @@ define([
 		}.bind(this);
 
 		window.onmouseup = function(event) {
-			this.hook.releaseRope();
+			// this.hook.removePlayerConstraint();
 		}.bind(this);
 	};
 
