@@ -186,7 +186,7 @@ define([
 				// Down
 				case 83:
 				case 40:
-					this.hook.detachRope();
+					this.hook.disable();
 					break;
 				default:
 					console.log('unbound : ', event.keyCode);
@@ -238,7 +238,10 @@ define([
 			p2.vec2.normalize(workingTarget, workingTarget);
 
 			this.hook.fire(workingTarget);
-			return true;
+		}.bind(this);
+
+		document.onmouseup = function(event) {
+			this.hook.disable();
 		}.bind(this);
 	};
 
