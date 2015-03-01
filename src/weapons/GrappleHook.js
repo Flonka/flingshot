@@ -30,6 +30,8 @@ define([
 
 		this.hookFireVelocity = 80;
 
+		this.recoilAmount = 0.1;
+
 		this.player = player;
 
 		var material = new Material(ShaderLib.simpleColored);
@@ -56,8 +58,9 @@ define([
 
 		this.ropeEntities = [];
 		this.ropeCount = 15;
-		
+
 		var ropeRadius = this.hookRadius * 0.45;
+		var ropeDistance = 2.5 * ropeRadius;
 		var lastBody = null;
 
 		for (var i=0; i < this.ropeCount; i++) {
@@ -66,7 +69,7 @@ define([
 				ropeMaterial
 			);
 			r.set(new P2Component({
-				mass: this.mass * 0.2,
+				mass: this.mass * 0.5,
 				shapes: [{
 					type: 'circle',
 					radius: ropeRadius
@@ -84,12 +87,12 @@ define([
 					b, 
 					lastBody,
 					{
-						distance: 4.0 * ropeRadius
+						distance: ropeDistance
 					}
 				);
 				c.lowerLimit = 0;
 				c.lowerLimitEnabled = true;
-				c.upperLimit = 4.0 * ropeRadius;
+				c.upperLimit = ropeDistance;
 				c.upperLimitEnabled = true;
 				b.world.addConstraint(c);
 			}
@@ -103,7 +106,7 @@ define([
 
 		world.process();
 
-		this.attachRope(this.player.rigidBody, this.player.rigidBody.position);
+		this.setPlayerConstraint();
 
 		// Set up the hook physics to init state, add handlers
 
@@ -255,22 +258,28 @@ define([
 	};
 
 	GrappleHook.prototype.fire = function(direction) {
-		
-		this.removePlayerConstraint();
 
 		var hookBody = this.hook.p2Component.body;
 
 		this.enableHook();
 
-		var playerPos = this.player.rigidBody.position;
+		var playerBody = this.player.rigidBody;
+		
+
+		var playerPos = playerBody.position;
 
 		var vx = this.hookFireVelocity * direction[0];
 		var vy = this.hookFireVelocity * direction[1];
+		
 		hookBody.wakeUp();
 		hookBody.position[0] = playerPos[0];
 		hookBody.position[1] = playerPos[1];
 		hookBody.velocity[0] = vx;
 		hookBody.velocity[1] = vy;
+
+		// Recoil
+		playerBody.velocity[0] += this.recoilAmount * -vx;
+		playerBody.velocity[1] += this.recoilAmount * -vy;
 
 		for (var i=0; i < this.ropeCount; i++) {
 			var b = this.ropeEntities[i].p2Component.body;
@@ -283,8 +292,6 @@ define([
 		}
 
 		this.attachRope(hookBody, hookBody.position);
-
-		this.setPlayerConstraint();
 	};
 
 	return GrappleHook;
