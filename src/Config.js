@@ -14,7 +14,7 @@ define([
 
 	Config.player = {
 		airMoveMult: 0.1,
-		fixedRotation: true
+		fixedRotation: false
 	};
 
 

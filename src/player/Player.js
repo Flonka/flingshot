@@ -39,6 +39,14 @@ define([
 		this.width = 1.0;
 		this.height = 1.8;
 
+		this.controls = {
+			moveMult: 0,
+			left: false,
+			right: false,
+			shoot: false,
+			jump: false,
+		};
+
 		this.entity = world.createEntity(
 			new Cylinder(8, this.width, this.width, this.height),
 			this.material,
@@ -55,6 +63,8 @@ define([
 			offsetAngleX: Math.PI/2.0,
 			fixedRotation: Config.player.fixedRotation
 		}));
+
+
 
 		this.addScriptComponent();
 
@@ -74,20 +84,11 @@ define([
 
 		this.hook = new GrappleHook(world, this);
 
-		this.controls = {
-			moveMult: 0,
-			left: false,
-			right: false,
-			shoot: false,
-			jump: false,
-		};
-
 		this.jumpForce = 20000;
 		this.moveForce = 5000;
 		this.capXvelocity = 15;
 
 		this.addKeyBoardListeners();
-
 
 		this.followCamera = new FollowCamera(this);
 
@@ -116,7 +117,6 @@ define([
 		};
 		sc.scripts.push(moveScript);
 		this.entity.set(sc);
-
 	};
 
 	var yAxis = [0,1];
@@ -186,7 +186,7 @@ define([
 				// Down
 				case 83:
 				case 40:
-					this.hook.removePlayerConstraint();
+					this.hook.detachRope();
 					break;
 				default:
 					console.log('unbound : ', event.keyCode);
@@ -227,7 +227,7 @@ define([
 		var pickRay = new Ray();
 		var pickVec = new Vector3();
 		var pickPlane = new Plane(new Vector3(0,0,1), 0);
-		window.onmousedown = function(event) {
+		document.onmousedown = function(event) {
 
 			var canvas = this.entity._world.gooRunner.renderer.domElement;
 			this.followCamera.camera.getPickRay(event.x, event.y, canvas.width, canvas.height, pickRay);
@@ -238,10 +238,7 @@ define([
 			p2.vec2.normalize(workingTarget, workingTarget);
 
 			this.hook.fire(workingTarget);
-		}.bind(this);
-
-		window.onmouseup = function(event) {
-			// this.hook.removePlayerConstraint();
+			return true;
 		}.bind(this);
 	};
 

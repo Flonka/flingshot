@@ -24,11 +24,11 @@ define([
 
 	function GrappleHook(world, player) {
 
-		this.mass = 1.5;
+		this.mass = 2.5;
 
 		this.hookRadius = 0.3;
 
-		this.hookFireForce = 5000;
+		this.hookFireVelocity = 80;
 
 		this.player = player;
 
@@ -55,7 +55,7 @@ define([
 		ropeMaterial.uniforms.color = [0.5, 0.5, 0];
 
 		this.ropeEntities = [];
-		this.ropeCount = 25;
+		this.ropeCount = 15;
 		
 		var ropeRadius = this.hookRadius * 0.45;
 		var lastBody = null;
@@ -66,7 +66,7 @@ define([
 				ropeMaterial
 			);
 			r.set(new P2Component({
-				mass: this.mass * 0.05,
+				mass: this.mass * 0.2,
 				shapes: [{
 					type: 'circle',
 					radius: ropeRadius
@@ -80,7 +80,13 @@ define([
 			s.collisionMask = Config.collisionGroup.ground;
 
 			if (lastBody) {
-				var c = new p2.DistanceConstraint(b, lastBody);
+				var c = new p2.DistanceConstraint(
+					b, 
+					lastBody,
+					{
+						distance: 4.0 * ropeRadius
+					}
+				);
 				c.lowerLimit = 0;
 				c.lowerLimitEnabled = true;
 				c.upperLimit = 4.0 * ropeRadius;
@@ -92,12 +98,12 @@ define([
 			this.ropeEntities.push(r);
 		}
 
-		this.ropeConstraint = null;
+		this.ropeAttachment = null;
 		this.playerConstraint = null;
 
-		this.setRopeConstraint(this.player.rigidBody, this.player.rigidBody.position);
-
 		world.process();
+
+		this.attachRope(this.player.rigidBody, this.player.rigidBody.position);
 
 		// Set up the hook physics to init state, add handlers
 
@@ -112,9 +118,9 @@ define([
 			var hookBody = this.hook.p2Component.body;
 
 			if (event.bodyA === hookBody) {
-				this.createRope(event, true);
+				this.anchorRope(event, true);
 			} else if (event.bodyB === hookBody) {
-				this.createRope(event, false);
+				this.anchorRope(event, false);
 			}
 
 		}.bind(this));
@@ -122,9 +128,9 @@ define([
 		this.disableHook();
 	};
 
-	GrappleHook.prototype.setRopeConstraint = function(body, position) {
+	GrappleHook.prototype.attachRope = function(body, position) {
 
-		this.removeRopeConstraint();
+		this.detachRope();
 
 		var ropeBody = this.ropeEntities[0].p2Component.body;
 
@@ -140,14 +146,19 @@ define([
 		);
 
 		ropeBody.world.addConstraint(c);
-		this.ropeConstraint = c;
+
+		console.debug('Constraint count : ', ropeBody.world.constraints.length);
+
+		this.ropeAttachment = c;
 	};
 
-	GrappleHook.prototype.removeRopeConstraint = function() {
-		if (this.ropeConstraint !== null) {
-			var world = this.ropeConstraint.bodyA.world;
-			world.removeConstraint(this.ropeConstraint);
-			this.ropeConstraint = null;
+	GrappleHook.prototype.detachRope = function() {
+		if (this.ropeAttachment !== null) {
+			console.debug('Detached rope!');
+			var world = this.player.rigidBody.world;
+			world.removeConstraint(this.ropeAttachment);
+			this.ropeAttachment = null;
+			console.debug('Constraint count : ', world.constraints.length);
 		}
 	};
 
@@ -159,14 +170,15 @@ define([
 		// Grab the last for now..
 		var ropeBody = this.ropeEntities[this.ropeCount - 1].p2Component.body;
 		var playerBody = this.player.rigidBody;
+
 		pivotPos = playerBody.position;
 		pivotPos[1] += this.player.height * 0.5;
 
-		var c = new p2.RevoluteConstraint(
+		var c = new p2.DistanceConstraint(
 			ropeBody,
 			playerBody,
 			{
-				worldPivot: pivotPos
+				distance: 0
 			}
 		);
 
@@ -187,7 +199,14 @@ define([
 	GrappleHook.prototype.disableHook = function() {
 		var hookBody = this.hook.p2Component.body;
 		hookBody.world.removeBody(hookBody);
-		this.material.uniforms.color = [0, 1, 0.2];
+
+		var hookShape = hookBody.shapes[0];
+
+		//hookShape.collisionGroup = Config.collisionGroup.bullet;
+		hookShape.collisionMask = Config.collisionGroup.ground | Config.collisionGroup.player;
+
+		this.material.uniforms.color = [0, 0.5, 0.2];
+		this.material.wireframe = true;
 	};
 
 	GrappleHook.prototype.enableHook = function() {
@@ -195,14 +214,19 @@ define([
 		if (!hookBody.world) {
 			var world = this.player.rigidBody.world;
 			world.addBody(hookBody);
+			var hookShape = hookBody.shapes[0];
+			hookShape.collisionMask = Config.collisionGroup.ground;
 			this.material.uniforms.color = [0.89, 0, 0];
+			this.material.wireframe = false;
 		}
 	};
 
 	var anchorPos = [0,0];
-	GrappleHook.prototype.createRope = function(contactEvent, hookIsBodyA) {
+	GrappleHook.prototype.anchorRope = function(contactEvent, hookIsBodyA) {
 
 		var equation = contactEvent.contactEquation;
+
+		console.debug('Anchor rope!');
 
 		// Using the only the first contact equation for the anchor pos.
 		var targetBody, contactPoint, hookBody;
@@ -221,13 +245,13 @@ define([
 		// Only to get correct debug visuals
 		hookBody.position = anchorPos;
 
-		this.setRopeConstraint(targetBody, anchorPos);
+		this.attachRope(targetBody, anchorPos);
 
 		console.debug('Anchored ', anchorPos);
-		
-		//this.setPlayerConstraint();
 
+		// WHY do i need this now? Seems as the old constraint is still acting or something.
 		this.disableHook();
+
 	};
 
 	GrappleHook.prototype.fire = function(direction) {
@@ -239,15 +263,28 @@ define([
 		this.enableHook();
 
 		var playerPos = this.player.rigidBody.position;
+
+		var vx = this.hookFireVelocity * direction[0];
+		var vy = this.hookFireVelocity * direction[1];
 		hookBody.wakeUp();
 		hookBody.position[0] = playerPos[0];
 		hookBody.position[1] = playerPos[1];
-		hookBody.velocity[0] = 0;
-		hookBody.velocity[1] = 0;
-		hookBody.force[0] = this.hookFireForce * direction[0];
-		hookBody.force[1] = this.hookFireForce * direction[1];
+		hookBody.velocity[0] = vx;
+		hookBody.velocity[1] = vy;
 
-		this.setRopeConstraint(hookBody, hookBody.position);
+		for (var i=0; i < this.ropeCount; i++) {
+			var b = this.ropeEntities[i].p2Component.body;
+			b.position[0] = playerPos[0];
+			b.position[1] = playerPos[1];
+			b.velocity[0] = vx;
+			b.velocity[1] = vy;
+			vx -= 0.2 * vx;
+			vy -= 0.2 * vy;
+		}
+
+		this.attachRope(hookBody, hookBody.position);
+
+		this.setPlayerConstraint();
 	};
 
 	return GrappleHook;
