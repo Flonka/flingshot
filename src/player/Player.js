@@ -32,9 +32,9 @@ define([
 
 		this.mass = 66.6;
 
-		this.material = new Material(ShaderLib.simpleColored);
+		this.material = new Material(ShaderLib.uber);
 
-		this.material.uniforms.color = [1.0, 0, 0.5];
+		this.material.uniforms.materialDiffuse = [1.0, 0, 0.5, 1.0];
 
 		this.width = 1.0;
 		this.height = 1.8;
@@ -204,6 +204,7 @@ define([
 				case 83:
 				case 40:
 					this.hook.disable();
+					console.log('Pos: ', this.entity.getTranslation().data);
 					break;
 				default:
 					console.log('unbound : ', event.keyCode);
@@ -229,8 +230,9 @@ define([
 				case 87:
 				case 38:
 					this.controls.jump = false;
+				
 					break;
-					// Down
+				// Down
 				case 83:
 				case 40:
 					break;
@@ -264,7 +266,7 @@ define([
 		}.bind(this);
 
 		document.onmouseup = function(event) {
-			this.hook.disable();
+			
 		}.bind(this);
 	};
 

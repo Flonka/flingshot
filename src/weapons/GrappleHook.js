@@ -28,16 +28,16 @@ define([
 
 		this.hookRadius = 0.3;
 
-		this.hookFireVelocity = 80;
+		this.hookFireVelocity = 50;
 
-		this.recoilAmount = 0.1;
+		this.recoilAmount = 0.04;
 
 		this.onCooldown = false;
 
 		this.player = player;
 
-		var material = new Material(ShaderLib.simpleColored);
-		material.uniforms.color = [0.89, 0, 0];
+		var material = new Material(ShaderLib.uber);
+		material.uniforms.materialDiffuse = [0.89, 0, 0, 1.0];
 		this.hook = world.createEntity(
 			new Sphere(8, 8, this.hookRadius),
 			material
@@ -55,11 +55,11 @@ define([
 
 		// Rope creation
 
-		var ropeMaterial = new Material(ShaderLib.simpleColored);
-		ropeMaterial.uniforms.color = [0.5, 0.5, 0];
+		var ropeMaterial = new Material(ShaderLib.uber);
+		ropeMaterial.uniforms.materialDiffuse = [0.5, 0.5, 0, 1.0];
 
 		this.ropeEntities = [];
-		this.ropeCount = 30;
+		this.ropeCount = 20;
 
 		var ropeRadius = this.hookRadius * 0.45;
 		var ropeDistance = 2.5 * ropeRadius;
@@ -195,13 +195,14 @@ define([
 		}
 	};
 
+
 	GrappleHook.prototype.disableHook = function() {
 		var hookBody = this.hook.p2Component.body;
 		if (hookBody.world) {
 			hookBody.world.removeBody(hookBody);	
 		}
 
-		this.material.uniforms.color = [0, 0.5, 0.2];
+		this.material.uniforms.materialDiffuse = [0, 0.5, 0.2, 1];
 	};
 
 	GrappleHook.prototype.enableHook = function() {
@@ -211,7 +212,7 @@ define([
 			world.addBody(hookBody);
 			var hookShape = hookBody.shapes[0];
 			hookShape.collisionMask = Config.collisionGroup.ground;
-			this.material.uniforms.color = [0.89, 0, 0];
+			this.material.uniforms.materialDiffuse = [0.89, 0, 0, 1];
 		}
 	};
 
@@ -243,11 +244,10 @@ define([
 
 		// WHY do i need this now? Seems as the old constraint is still acting or something.
 		this.disableHook();
-
 	};
 
 	GrappleHook.prototype.disable = function() {
-		this.detachRope();
+		// this.detachRope();
 		this.disableHook();
 		this.removePlayerConstraint();
 	};
@@ -278,15 +278,19 @@ define([
 		playerBody.velocity[0] += this.recoilAmount * -vx;
 		playerBody.velocity[1] += this.recoilAmount * -vy;
 
+		// velocity falloff on the rope bodies.
 		for (var i=0; i < this.ropeCount; i++) {
+
 			var b = this.ropeEntities[i].p2Component.body;
 			b.setZeroForce();
 			b.position[0] = playerPos[0];
 			b.position[1] = playerPos[1];
-			b.velocity[0] = vx;
-			b.velocity[1] = vy;
-			vx -= 0.2 * vx;
-			vy -= 0.2 * vy;
+
+			var falloff = (i + 1) / this.ropeCount;
+			falloff = 1 - falloff;
+
+			b.velocity[0] = vx * falloff;
+			b.velocity[1] = vy * falloff;
 		}
 
 		this.attachRope(hookBody, hookBody.position);
