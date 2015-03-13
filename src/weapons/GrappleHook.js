@@ -32,6 +32,8 @@ define([
 
 		this.recoilAmount = 0.1;
 
+		this.onCooldown = false;
+
 		this.player = player;
 
 		var material = new Material(ShaderLib.simpleColored);
@@ -57,7 +59,7 @@ define([
 		ropeMaterial.uniforms.color = [0.5, 0.5, 0];
 
 		this.ropeEntities = [];
-		this.ropeCount = 15;
+		this.ropeCount = 30;
 
 		var ropeRadius = this.hookRadius * 0.45;
 		var ropeDistance = 2.5 * ropeRadius;
@@ -158,7 +160,6 @@ define([
 			var world = this.player.rigidBody.world;
 			world.removeConstraint(this.ropeAttachment);
 			this.ropeAttachment = null;
-			console.debug('Constraint count : ', world.constraints.length);
 		}
 	};
 
@@ -256,7 +257,8 @@ define([
 		var hookBody = this.hook.p2Component.body;
 
 		this.enableHook();
-		
+
+		this.onCooldown = true;
 
 		var playerBody = this.player.rigidBody;
 
@@ -289,6 +291,13 @@ define([
 
 		this.attachRope(hookBody, hookBody.position);
 		this.setPlayerConstraint();
+
+		setTimeout(function() {
+			this.onCooldown = false;
+		}.bind(this),
+		Config.weapon.grappleHook.cooldown
+		);
+
 	};
 
 	return GrappleHook;

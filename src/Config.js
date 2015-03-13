@@ -14,8 +14,15 @@ define([
 
 	Config.player = {
 		airMoveMult: 0.1,
-		fixedRotation: false
+		fixedRotation: false,
+		jumpCooldown: 500
 	};
+
+	Config.weapon = {
+		grappleHook: {
+			cooldown: 1000,
+		}
+	}
 
 
 	return Config;

@@ -39,6 +39,12 @@ define([
 		this.width = 1.0;
 		this.height = 1.8;
 
+		this.jumpForce = 20000;
+		this.onJumpCooldown = false;
+
+		this.moveForce = 5000;
+		this.capXvelocity = 15;
+
 		this.controls = {
 			moveMult: 0,
 			left: false,
@@ -84,9 +90,7 @@ define([
 
 		this.hook = new GrappleHook(world, this);
 
-		this.jumpForce = 20000;
-		this.moveForce = 5000;
-		this.capXvelocity = 15;
+
 
 		this.addKeyBoardListeners();
 
@@ -155,9 +159,22 @@ define([
 	};
 
 	Player.prototype.jump = function() {
+
+		if (this.onJumpCooldown) {
+			console.log('Jump on CD!');
+			return;
+		}
+
+		this.onJumpCooldown = true;
 		this.rigidBody.force[1] += this.jumpForce;
 		this.rigidBody.position[1] += 0.07;
 		console.log('Jumped!');
+
+		setTimeout(function() {
+			this.onJumpCooldown = false;
+		}.bind(this),
+		Config.player.jumpCooldown
+		);
 	};
 
 
@@ -229,6 +246,11 @@ define([
 		var pickPlane = new Plane(new Vector3(0,0,1), 0);
 		document.onmousedown = function(event) {
 
+			if (this.hook.onCooldown == true) {
+				console.log('Hook on CD');
+				return;
+			}
+
 			var canvas = this.entity._world.gooRunner.renderer.domElement;
 			this.followCamera.camera.getPickRay(event.x, event.y, canvas.width, canvas.height, pickRay);
 			pickRay.intersectsPlane(pickPlane, pickVec);
@@ -238,6 +260,7 @@ define([
 			p2.vec2.normalize(workingTarget, workingTarget);
 
 			this.hook.fire(workingTarget);
+
 		}.bind(this);
 
 		document.onmouseup = function(event) {
