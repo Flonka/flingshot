@@ -55,8 +55,21 @@ define([
 		p2System.world.defaultContactMaterial.restitution = 0.2;
 		p2System.world.defaultContactMaterial.friction = 0.95;
 
-		var sun = world.createEntity(new DirectionalLight(new Vector3(1, 1, 1)), [0, 100, 0]);
-		sun.setRotation([-45, 45, 0]);
+		var sunLight = new DirectionalLight(new Vector3(1, 1, 1));
+		sunLight.shadowCaster = true;
+
+		sunLight.shadowSettings = {
+			size: 45,
+			near: 1,
+			far: 120,
+			resolution: [1024, 1024],
+			upVector: Vector3.UNIT_Y.clone(),
+			darkness: 1.0,
+			shadowType: 'VSM'
+		};
+
+		var sun = world.createEntity(sunLight, [40, 30, 0]);
+		sun.setRotation(-Math.PI/4, Math.PI * 0.4, 0);
 		sun.addToWorld();
 
 		document.body.appendChild(goo.renderer.domElement);

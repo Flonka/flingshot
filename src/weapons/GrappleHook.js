@@ -42,6 +42,7 @@ define([
 			new Sphere(8, 8, this.hookRadius),
 			material
 		);
+
 		this.hook.set(new P2Component({
 			mass: this.mass,
 			shapes: [{
@@ -49,6 +50,7 @@ define([
 				radius: this.hookRadius
 			}]
 		}));
+		
 		this.hook.addToWorld();
 
 		this.material = material;
