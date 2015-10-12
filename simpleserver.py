@@ -14,6 +14,7 @@ class MyHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
+
 	handler = MyHTTPRequestHandler
 	httpd = SocketServer.TCPServer(("", 9000), handler)
 	httpd.serve_forever()
